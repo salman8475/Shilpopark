@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vehicle Trip & Fuel Entry Form</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+    body { background-color: #f1f5f9; color: #1e293b; padding: 25px 15px; }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Top Headers */
+    .main-header {
+      background: #cddc39;
+      color: #000;
+      text-align: center;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: 800;
+      border-bottom: 1px solid #b0bec5;
+      letter-spacing: 0.5px;
+    }
+    .sub-header {
+      background: #1976d2;
+      color: #ffffff;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-toggle-all {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-toggle-all:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Search / Edit Panel */
+    .search-panel {
+      background: #e2e8f0;
+      padding: 12px 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #cbd5e1;
+    }
+    .search-panel input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+    .btn-search {
+      background: #0f172a;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-search:hover { background: #334155; }
+
+    /* Edit Banner */
+    #editBanner {
+      display: none;
+      background: #fef3c7;
+      border-left: 5px solid #d97706;
+      padding: 10px 20px;
+      color: #92400e;
+      font-size: 13px;
+      font-weight: 600;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-cancel-edit {
+      background: #b45309;
+      color: white;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* Accordion Category Bars */
+    .section-bar {
+      background: #1976d2;
+      color: #ffffff;
+      padding: 10px 15px;
+      font-size: 13px;
+      font-weight: 700;
+      border-top: 1px solid #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .section-bar:hover {
+      background: #1565c0;
+    }
+    .section-bar .title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-bar .toggle-icon {
+      font-size: 12px;
+    }
+
+    /* Collapsible Sections */
+    .section-content {
+      display: block;
+    }
+    .section-content.collapsed {
+      display: none !important;
+    }
+
+    form { padding: 0; }
+
+    /* Form Rows Grid */
+    .form-row {
+      display: grid;
+      grid-template-columns: 2fr 3fr;
+      border-bottom: 1px solid #e2e8f0;
+      align-items: center;
+    }
+    .form-row label {
+      padding: 8px 15px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+      background: #f8fafc;
+      border-right: 1px solid #e2e8f0;
+    }
+    .form-row input, .form-row select {
+      width: 100%;
+      padding: 6px 12px;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      background: #ffffff;
+    }
+    .form-row input:focus {
+      background: #eff6ff;
+    }
+    .form-row input[readonly] {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Highlight rows like Totals & Amounts */
+    .form-row.highlight label {
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+    .form-row.highlight input {
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+
+    /* Grand Total Special Bar */
+    .grand-total-bar {
+      background: #e53935;
+      color: white;
+      display: grid;
+      grid-template-columns: 2fr 3fr;
+      padding: 10px 15px;
+      font-weight: 800;
+      font-size: 15px;
+      align-items: center;
+    }
+    .grand-total-bar input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-weight: 800;
+      font-size: 16px;
+      text-align: right;
+      outline: none;
+    }
+
+    /* Submit Area */
+    .footer-action {
+      padding: 20px;
+      background: #f8fafc;
+      text-align: center;
+      border-top: 1px solid #cbd5e1;
+    }
+    .btn-submit {
+      width: 100%;
+      background: #0f6fd6;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 30px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit.btn-edit-mode { background: #d97706; }
+    .btn-submit.btn-edit-mode:hover { background: #b45309; }
+    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    #alertBox {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      font-weight: 600;
+    }
+    .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .alert-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+    /* =========================================================================
+       PREVIEW MODAL STYLES
+       ========================================================================= */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+    .modal-content {
+      background: #ffffff;
+      width: 100%;
+      max-width: 750px;
+      max-height: 88vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: popIn 0.2s ease-out;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      background: #1976d2;
+      color: #fff;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 15px 20px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+    .preview-section-title {
+      background: #f1f5f9;
+      color: #0f6fd6;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 6px 10px;
+      margin-top: 10px;
+      border-left: 3px solid #0f6fd6;
+      text-transform: uppercase;
+    }
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+    }
+    .preview-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 12.5px;
+    }
+    .preview-table td.field-name {
+      width: 45%;
+      color: #475569;
+      font-weight: 600;
+      background: #fafafa;
+    }
+    .preview-table td.field-val {
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .preview-table tr.highlight td {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .preview-table tr.grand-total td {
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: 800;
+      font-size: 13.5px;
+    }
+    .modal-footer {
+      background: #f8fafc;
+      padding: 12px 20px;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .btn-modal-cancel {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-modal-cancel:hover { background: #cbd5e1; }
+    .btn-modal-confirm {
+      background: #166534;
+      color: white;
+      border: none;
+      padding: 9px 22px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-modal-confirm:hover { background: #14532d; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="main-header">VEHICLE TRIP & FUEL ENTRY FORM</div>
+    <div class="sub-header">
+      <span>🚐 নতুন ট্রিপ এন্ট্রি ফরম (Vehicle Fuel Consumption)</span>
+      <button type="button" class="btn-toggle-all" id="btnToggleAll">Expand All</button>
+    </div>
+
+    <!-- SEARCH / EDIT LOOKUP BAR -->
+    <div class="search-panel">
+      <input type="text" id="searchQuery" placeholder="Search by Trip SL # or Vehicle Number to edit...">
+      <button type="button" id="btnFind" class="btn-search">Find Record</button>
+    </div>
+
+    <!-- BANNER WHEN IN EDIT MODE -->
+    <div id="editBanner">
+      <span id="editBannerText">Editing Trip Record</span>
+      <button type="button" id="btnCancelEdit" class="btn-cancel-edit">Cancel Edit (Create New)</button>
+    </div>
+
+    <form id="tripForm">
+      <!-- 1. TRIP INFO -->
+      <div class="section-bar collapsed" data-target="sec-trip-info">
+        <div class="title-group"><span>📌</span><span>ট্রিপের তথ্য (Trip Info)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-trip-info">
+        <div class="form-row"><label>Vehicle Number *</label><input type="text" id="vehicleNumber" placeholder="e.g. DM TA: 35-6878" required></div>
+        <div class="form-row"><label>Driver Name</label><input type="text" id="driverName" placeholder="e.g. Lokman"></div>
+        <div class="form-row"><label>Route</label><input type="text" id="route" placeholder="e.g. Mirpur"></div>
+        <div class="form-row"><label>Purpose</label><input type="text" id="purpose" placeholder="e.g. Delivery"></div>
+        <div class="form-row"><label>Trip Start Date</label><input type="date" id="tripStartDate"></div>
+        <div class="form-row"><label>Trip Start Time</label><input type="time" id="tripStartTime"></div>
+        <div class="form-row"><label>Trip End Date</label><input type="date" id="tripEndDate"></div>
+        <div class="form-row"><label>Trip End Time</label><input type="time" id="tripEndTime"></div>
+        <div class="form-row"><label>Trip Org.</label><input type="text" id="tripOrg" placeholder="e.g. MWIL"></div>
+        <div class="form-row"><label>Meter Start KM</label><input type="number" id="meterStartKm" class="calc-km" placeholder="0"></div>
+        <div class="form-row"><label>Meter End KM.</label><input type="number" id="meterEndKm" class="calc-km" placeholder="0"></div>
+        <div class="form-row highlight"><label>Total Running KM</label><input type="text" id="totalRunningKm" readonly value="0"></div>
+        <div class="form-row"><label>Number of Trip</label><input type="number" id="numberOfTrip" placeholder="1"></div>
+        <div class="form-row"><label>Meter Status</label><input type="text" id="meterStatus" placeholder="Running / OK"></div>
+      </div>
+
+      <!-- 2. FUEL -->
+      <div class="section-bar collapsed" data-target="sec-fuel">
+        <div class="title-group"><span>⛽</span><span>জ্বালানি (Fuel)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-fuel">
+        <div class="form-row"><label>Diesel Ltr</label><input type="number" id="dieselLtr" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row"><label>Diesel Rate</label><input type="number" id="dieselRate" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row highlight"><label>Diesel Total Amount</label><input type="text" id="dieselTotal" readonly value="0"></div>
+        
+        <div class="form-row"><label>Octen Ltr</label><input type="number" id="octerLtr" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row"><label>Octen Rate</label><input type="number" id="octerRate" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row highlight"><label>Octen Total Amount</label><input type="text" id="octerTotal" readonly value="0"></div>
+
+        <div class="form-row"><label>Petrol Ltr</label><input type="number" id="petrolLtr" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row"><label>Petrol Rate</label><input type="number" id="petrolRate" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row highlight"><label>Petrol Total Amount</label><input type="text" id="petrolTotal" readonly value="0"></div>
+
+        <div class="form-row"><label>LPG CM</label><input type="number" id="lpgCm" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row"><label>LPG Rate</label><input type="number" id="lpgRate" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row highlight"><label>LPG Total Amount</label><input type="text" id="lpgTotal" readonly value="0"></div>
+
+        <div class="form-row"><label>CNG CM</label><input type="number" id="cngCm" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row"><label>CNG Rate</label><input type="number" id="cngRate" class="fuel-calc" placeholder="0" step="0.01"></div>
+        <div class="form-row highlight"><label>CNG Total Amount</label><input type="text" id="cngTotal" readonly value="0"></div>
+
+        <div class="form-row highlight"><label>Total Fuel (Qty)</label><input type="text" id="totalFuelQty" readonly value="0"></div>
+        <div class="form-row highlight"><label>Total Fuel Price</label><input type="text" id="totalFuelPrice" readonly value="0"></div>
+      </div>
+
+      <!-- 3. OVERTIME -->
+      <div class="section-bar collapsed" data-target="sec-overtime">
+        <div class="title-group"><span>⏱</span><span>ওভারটাইম (Overtime)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-overtime">
+        <div class="form-row"><label>Driver Overtime Amount</label><input type="number" id="driverOt" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Delivery Man/ Helper Overtime Amount</label><input type="number" id="helperOt" class="sum-group" placeholder="0"></div>
+        <div class="form-row highlight"><label>Total Overtime</label><input type="text" id="totalOt" readonly value="0"></div>
+      </div>
+
+      <!-- 4. ROAD EXPENSE -->
+      <div class="section-bar collapsed" data-target="sec-road">
+        <div class="title-group"><span>🛣</span><span>রাস্তার খরচ (Road Expense)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-road">
+        <div class="form-row"><label>Toll</label><input type="number" id="roadToll" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Ferry</label><input type="number" id="roadFerry" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Bridge</label><input type="number" id="roadBridge" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Parking</label><input type="number" id="roadParking" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Highway Charge</label><input type="number" id="roadHighway" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Loading/Unloading</label><input type="number" id="roadLoading" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Police Tips</label><input type="number" id="roadPoliceTips" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Other Road Expense</label><input type="number" id="roadOther" class="sum-group" placeholder="0"></div>
+        <div class="form-row highlight"><label>Total [Road Expense]</label><input type="text" id="totalRoadExpense" readonly value="0"></div>
+      </div>
+
+      <!-- 5. DAILY MEALS -->
+      <div class="section-bar collapsed" data-target="sec-meals">
+        <div class="title-group"><span>🍱</span><span>খাবার খরচ (Daily Meals)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-meals">
+        <div class="form-row"><label>Breakfast</label><input type="number" id="mealBreakfast" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Lunch</label><input type="number" id="mealLunch" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Dinner</label><input type="number" id="mealDinner" class="sum-group" placeholder="0"></div>
+        <div class="form-row highlight"><label>Total [Daily Meals]</label><input type="text" id="totalMeals" readonly value="0"></div>
+      </div>
+
+      <!-- 6. MAINTENANCE -->
+      <div class="section-bar collapsed" data-target="sec-maint">
+        <div class="title-group"><span>🔧</span><span>রক্ষণাবেক্ষণ (Maintenance)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-maint">
+        <div class="form-row"><label>Engine Oil</label><input type="number" id="maintEngineOil" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Tyre</label><input type="number" id="maintTyre" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Battery</label><input type="number" id="maintBattery" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Brake</label><input type="number" id="maintBrake" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Servicing</label><input type="number" id="maintServicing" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Repair</label><input type="number" id="maintRepair" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Spare Parts</label><input type="number" id="maintSpareParts" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Labour Cost</label><input type="number" id="maintLabour" class="sum-group" placeholder="0"></div>
+        <div class="form-row highlight"><label>Total [Maintenance]</label><input type="text" id="totalMaintenance" readonly value="0"></div>
+      </div>
+
+      <!-- 7. POLICE CASE -->
+      <div class="section-bar collapsed" data-target="sec-police">
+        <div class="title-group"><span>👮</span><span>পুলিশ কেস (Police Case)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-police">
+        <div class="form-row"><label>Police Case Amount</label><input type="number" id="policeAmount" class="sum-group" placeholder="0"></div>
+        <div class="form-row"><label>Police Case Remarks</label><input type="text" id="policeRemarks" placeholder="Remarks if any"></div>
+      </div>
+
+      <!-- GRAND TOTAL TRIP COST -->
+      <div class="grand-total-bar">
+        <span>Grand Total Trip Cost</span>
+        <input type="text" id="grandTotalTripCost" readonly value="0">
+      </div>
+
+      <!-- 8. ACCIDENTAL RECOVERY -->
+      <div class="section-bar collapsed" data-target="sec-recovery">
+        <div class="title-group"><span>🚑</span><span>দুর্ঘটনা রিকভারি (Accidental Recovery)</span></div>
+        <span class="toggle-icon">►</span>
+      </div>
+      <div class="section-content collapsed" id="sec-recovery">
+        <div class="form-row"><label>Accidental Recovery Amount</label><input type="number" id="recoveryAmount" placeholder="0"></div>
+        <div class="form-row"><label>Accidental Recovery Remarks</label><input type="text" id="recoveryRemarks" placeholder="Remarks if any"></div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div class="footer-action">
+        <button type="submit" id="btnSubmit" class="btn-submit">Review & Submit Trip Record</button>
+        <div id="alertBox"></div>
+      </div>
+    </form>
+  </div>
+
+  <!-- =========================================================================
+       PREVIEW SUMMARY MODAL
+       ========================================================================= -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>📋 Verify & Confirm Trip Record</span>
+        <span style="font-size: 13px; opacity: 0.8;" id="modalModeTag">Create Mode</span>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-cancel" id="btnModalCancel">Make Changes</button>
+        <button type="button" class="btn-modal-confirm" id="btnModalConfirm">Confirm & Save Record</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // APPS SCRIPT WEB APP URL:
+    // =========================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoOeMwtrdWfv5vJEB7Dp8ZXEQr4mEl2J8ULp8IokvcFvnyjubucUVnH_7W_vhFHj37/exec";
+
+    let currentEditRow = null;
+    let currentEditSl = null;
+
+    // =========================================================================
+    // ACCORDION TOGGLE LOGIC
+    // =========================================================================
+    const sectionBars = document.querySelectorAll('.section-bar');
+    sectionBars.forEach(bar => {
+      bar.addEventListener('click', () => {
+        const targetId = bar.getAttribute('data-target');
+        const content = document.getElementById(targetId);
+        const icon = bar.querySelector('.toggle-icon');
+
+        if (content.classList.contains('collapsed')) {
+          content.classList.remove('collapsed');
+          bar.classList.remove('collapsed');
+          icon.textContent = '▲';
+        } else {
+          content.classList.add('collapsed');
+          bar.classList.add('collapsed');
+          icon.textContent = '►';
+        }
+      });
+    });
+
+    // Toggle All Sections Button (Starts Collapsed)
+    let allExpanded = false;
+    document.getElementById('btnToggleAll').addEventListener('click', function() {
+      allExpanded = !allExpanded;
+      this.textContent = allExpanded ? "Collapse All" : "Expand All";
+
+      sectionBars.forEach(bar => {
+        const targetId = bar.getAttribute('data-target');
+        const content = document.getElementById(targetId);
+        const icon = bar.querySelector('.toggle-icon');
+
+        if (allExpanded) {
+          content.classList.remove('collapsed');
+          bar.classList.remove('collapsed');
+          icon.textContent = '▲';
+        } else {
+          content.classList.add('collapsed');
+          bar.classList.add('collapsed');
+          icon.textContent = '►';
+        }
+      });
+    });
+
+    // =========================================================================
+    // DATE HELPERS
+    // =========================================================================
+    function formatDateToInput(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function normalizeDateForInput(str) {
+      if (!str) return "";
+      str = str.toString().replace(/^'/, '').trim();
+      const parts = str.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[2].length === 4) { // DD-MM-YYYY
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        } else if (parts[0].length === 4) { // YYYY-MM-DD
+          return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        }
+      }
+      return str;
+    }
+
+    const todayStr = formatDateToInput(new Date());
+    document.getElementById('tripStartDate').value = todayStr;
+    document.getElementById('tripEndDate').value = todayStr;
+
+    // =========================================================================
+    // LIVE CALCULATION ENGINE
+    // =========================================================================
+    function calculateAll() {
+      // 1. Running KM
+      const startKm = Number(document.getElementById('meterStartKm').value) || 0;
+      const endKm = Number(document.getElementById('meterEndKm').value) || 0;
+      const totalKm = (endKm && endKm >= startKm) ? endKm - startKm : 0;
+      document.getElementById('totalRunningKm').value = totalKm;
+
+      // 2. Fuel Totals
+      const dieselL = Number(document.getElementById('dieselLtr').value) || 0;
+      const dieselR = Number(document.getElementById('dieselRate').value) || 0;
+      const dieselAmt = dieselL * dieselR;
+      document.getElementById('dieselTotal').value = dieselAmt;
+
+      const octerL = Number(document.getElementById('octerLtr').value) || 0;
+      const octerR = Number(document.getElementById('octerRate').value) || 0;
+      const octerAmt = octerL * octerR;
+      document.getElementById('octerTotal').value = octerAmt;
+
+      const petrolL = Number(document.getElementById('petrolLtr').value) || 0;
+      const petrolR = Number(document.getElementById('petrolRate').value) || 0;
+      const petrolAmt = petrolL * petrolR;
+      document.getElementById('petrolTotal').value = petrolAmt;
+
+      const lpgC = Number(document.getElementById('lpgCm').value) || 0;
+      const lpgR = Number(document.getElementById('lpgRate').value) || 0;
+      const lpgAmt = lpgC * lpgR;
+      document.getElementById('lpgTotal').value = lpgAmt;
+
+      const cngC = Number(document.getElementById('cngCm').value) || 0;
+      const cngR = Number(document.getElementById('cngRate').value) || 0;
+      const cngAmt = cngC * cngR;
+      document.getElementById('cngTotal').value = cngAmt;
+
+      const totalFuelQty = dieselL + octerL + petrolL + lpgC + cngC;
+      const totalFuelPrice = dieselAmt + octerAmt + petrolAmt + lpgAmt + cngAmt;
+      document.getElementById('totalFuelQty').value = totalFuelQty;
+      document.getElementById('totalFuelPrice').value = totalFuelPrice;
+
+      // 3. Overtime Total
+      const totalOt = (Number(document.getElementById('driverOt').value) || 0) +
+                      (Number(document.getElementById('helperOt').value) || 0);
+      document.getElementById('totalOt').value = totalOt;
+
+      // 4. Road Expense Total
+      const roadExp = (Number(document.getElementById('roadToll').value) || 0) +
+                      (Number(document.getElementById('roadFerry').value) || 0) +
+                      (Number(document.getElementById('roadBridge').value) || 0) +
+                      (Number(document.getElementById('roadParking').value) || 0) +
+                      (Number(document.getElementById('roadHighway').value) || 0) +
+                      (Number(document.getElementById('roadLoading').value) || 0) +
+                      (Number(document.getElementById('roadPoliceTips').value) || 0) +
+                      (Number(document.getElementById('roadOther').value) || 0);
+      document.getElementById('totalRoadExpense').value = roadExp;
+
+      // 5. Meals Total
+      const mealsTotal = (Number(document.getElementById('mealBreakfast').value) || 0) +
+                         (Number(document.getElementById('mealLunch').value) || 0) +
+                         (Number(document.getElementById('mealDinner').value) || 0);
+      document.getElementById('totalMeals').value = mealsTotal;
+
+      // 6. Maintenance Total
+      const maintTotal = (Number(document.getElementById('maintEngineOil').value) || 0) +
+                         (Number(document.getElementById('maintTyre').value) || 0) +
+                         (Number(document.getElementById('maintBattery').value) || 0) +
+                         (Number(document.getElementById('maintBrake').value) || 0) +
+                         (Number(document.getElementById('maintServicing').value) || 0) +
+                         (Number(document.getElementById('maintRepair').value) || 0) +
+                         (Number(document.getElementById('maintSpareParts').value) || 0) +
+                         (Number(document.getElementById('maintLabour').value) || 0);
+      document.getElementById('totalMaintenance').value = maintTotal;
+
+      // 7. Police Case
+      const policeAmt = Number(document.getElementById('policeAmount').value) || 0;
+
+      // Grand Total Trip Cost
+      const grandTotal = totalFuelPrice + totalOt + roadExp + mealsTotal + maintTotal + policeAmt;
+      document.getElementById('grandTotalTripCost').value = grandTotal;
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', calculateAll);
+    });
+
+    // =========================================================================
+    // SEARCH & EDIT RECORD LOOKUP
+    // =========================================================================
+    document.getElementById('btnFind').addEventListener('click', function() {
+      const q = document.getElementById('searchQuery').value.trim();
+      if (!q) {
+        alert("Please enter a Trip SL # or Vehicle Number to search.");
+        return;
+      }
+
+      const btnFind = document.getElementById('btnFind');
+      btnFind.disabled = true;
+      btnFind.textContent = "Searching...";
+
+      fetch(`${SCRIPT_URL}?action=findTrip&query=${encodeURIComponent(q)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.found) {
+            alert("No matching trip record found for: " + q);
+            return;
+          }
+
+          currentEditRow = data.rowIndex;
+          currentEditSl = data.slNo;
+
+          // Expand all sections when a record is loaded for editing
+          sectionBars.forEach(bar => {
+            const targetId = bar.getAttribute('data-target');
+            document.getElementById(targetId).classList.remove('collapsed');
+            bar.classList.remove('collapsed');
+            bar.querySelector('.toggle-icon').textContent = '▲';
+          });
+          allExpanded = true;
+          document.getElementById('btnToggleAll').textContent = "Collapse All";
+
+          // Populate fields
+          document.getElementById('vehicleNumber').value = data.vehicleNumber || "";
+          document.getElementById('driverName').value = data.driverName || "";
+          document.getElementById('route').value = data.route || "";
+          document.getElementById('purpose').value = data.purpose || "";
+          if (data.tripStartDate) document.getElementById('tripStartDate').value = normalizeDateForInput(data.tripStartDate);
+          document.getElementById('tripStartTime').value = data.tripStartTime || "";
+          if (data.tripEndDate) document.getElementById('tripEndDate').value = normalizeDateForInput(data.tripEndDate);
+          document.getElementById('tripEndTime').value = data.tripEndTime || "";
+          document.getElementById('tripOrg').value = data.tripOrg || "";
+          document.getElementById('meterStartKm').value = data.meterStartKm || "";
+          document.getElementById('meterEndKm').value = data.meterEndKm || "";
+          document.getElementById('numberOfTrip').value = data.numberOfTrip || "";
+          document.getElementById('meterStatus').value = data.meterStatus || "";
+
+          // Fuels
+          document.getElementById('dieselLtr').value = data.dieselLtr || "";
+          document.getElementById('dieselRate').value = data.dieselRate || "";
+          document.getElementById('octerLtr').value = data.octerLtr || "";
+          document.getElementById('octerRate').value = data.octerRate || "";
+          document.getElementById('petrolLtr').value = data.petrolLtr || "";
+          document.getElementById('petrolRate').value = data.petrolRate || "";
+          document.getElementById('lpgCm').value = data.lpgCm || "";
+          document.getElementById('lpgRate').value = data.lpgRate || "";
+          document.getElementById('cngCm').value = data.cngCm || "";
+          document.getElementById('cngRate').value = data.cngRate || "";
+
+          // Overtime
+          document.getElementById('driverOt').value = data.driverOt || "";
+          document.getElementById('helperOt').value = data.helperOt || "";
+
+          // Road Expense
+          document.getElementById('roadToll').value = data.roadToll || "";
+          document.getElementById('roadFerry').value = data.roadFerry || "";
+          document.getElementById('roadBridge').value = data.roadBridge || "";
+          document.getElementById('roadParking').value = data.roadParking || "";
+          document.getElementById('roadHighway').value = data.roadHighway || "";
+          document.getElementById('roadLoading').value = data.roadLoading || "";
+          document.getElementById('roadPoliceTips').value = data.roadPoliceTips || "";
+          document.getElementById('roadOther').value = data.roadOther || "";
+
+          // Meals
+          document.getElementById('mealBreakfast').value = data.mealBreakfast || "";
+          document.getElementById('mealLunch').value = data.mealLunch || "";
+          document.getElementById('mealDinner').value = data.mealDinner || "";
+
+          // Maintenance
+          document.getElementById('maintEngineOil').value = data.maintEngineOil || "";
+          document.getElementById('maintTyre').value = data.maintTyre || "";
+          document.getElementById('maintBattery').value = data.maintBattery || "";
+          document.getElementById('maintBrake').value = data.maintBrake || "";
+          document.getElementById('maintServicing').value = data.maintServicing || "";
+          document.getElementById('maintRepair').value = data.maintRepair || "";
+          document.getElementById('maintSpareParts').value = data.maintSpareParts || "";
+          document.getElementById('maintLabour').value = data.maintLabour || "";
+
+          // Police & Recovery
+          document.getElementById('policeAmount').value = data.policeAmount || "";
+          document.getElementById('policeRemarks').value = data.policeRemarks || "";
+          document.getElementById('recoveryAmount').value = data.recoveryAmount || "";
+          document.getElementById('recoveryRemarks').value = data.recoveryRemarks || "";
+
+          calculateAll();
+
+          document.getElementById('editBannerText').textContent = `Editing Trip SL #${data.slNo} (Row ${data.rowIndex})`;
+          document.getElementById('editBanner').style.display = "flex";
+          const submitBtn = document.getElementById('btnSubmit');
+          submitBtn.textContent = "Review & Update Trip Record";
+          submitBtn.classList.add('btn-edit-mode');
+        })
+        .catch(err => {
+          alert("Search error: " + err);
+        })
+        .finally(() => {
+          btnFind.disabled = false;
+          btnFind.textContent = "Find Record";
+        });
+    });
+
+    document.getElementById('btnCancelEdit').addEventListener('click', resetForm);
+
+    function resetForm() {
+      currentEditRow = null;
+      currentEditSl = null;
+      document.getElementById('tripForm').reset();
+      const today = formatDateToInput(new Date());
+      document.getElementById('tripStartDate').value = today;
+      document.getElementById('tripEndDate').value = today;
+      document.getElementById('editBanner').style.display = "none";
+      const submitBtn = document.getElementById('btnSubmit');
+      submitBtn.textContent = "Review & Submit Trip Record";
+      submitBtn.classList.remove('btn-edit-mode');
+      calculateAll();
+
+      // Re-collapse everything back to initial clean state
+      sectionBars.forEach(bar => {
+        const targetId = bar.getAttribute('data-target');
+        document.getElementById(targetId).classList.add('collapsed');
+        bar.classList.add('collapsed');
+        bar.querySelector('.toggle-icon').textContent = '►';
+      });
+      allExpanded = false;
+      document.getElementById('btnToggleAll').textContent = "Expand All";
+    }
+
+    // =========================================================================
+    // PREVIEW MODAL INTERCEPTION
+    // =========================================================================
+    let activePayload = null;
+
+    document.getElementById('tripForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      calculateAll();
+
+      activePayload = {
+        type: "trip_entry",
+        action: currentEditRow ? "update" : "create",
+        rowIndex: currentEditRow,
+        slNo: currentEditSl,
+        vehicleNumber: document.getElementById('vehicleNumber').value,
+        driverName: document.getElementById('driverName').value,
+        route: document.getElementById('route').value,
+        purpose: document.getElementById('purpose').value,
+        tripStartDate: document.getElementById('tripStartDate').value,
+        tripStartTime: document.getElementById('tripStartTime').value,
+        tripEndDate: document.getElementById('tripEndDate').value,
+        tripEndTime: document.getElementById('tripEndTime').value,
+        tripOrg: document.getElementById('tripOrg').value,
+        meterStartKm: document.getElementById('meterStartKm').value,
+        meterEndKm: document.getElementById('meterEndKm').value,
+        totalRunningKm: document.getElementById('totalRunningKm').value,
+        numberOfTrip: document.getElementById('numberOfTrip').value,
+        meterStatus: document.getElementById('meterStatus').value,
+        // Fuel
+        dieselLtr: document.getElementById('dieselLtr').value,
+        dieselRate: document.getElementById('dieselRate').value,
+        dieselTotal: document.getElementById('dieselTotal').value,
+        octerLtr: document.getElementById('octerLtr').value,
+        octerRate: document.getElementById('octerRate').value,
+        octerTotal: document.getElementById('octerTotal').value,
+        petrolLtr: document.getElementById('petrolLtr').value,
+        petrolRate: document.getElementById('petrolRate').value,
+        petrolTotal: document.getElementById('petrolTotal').value,
+        lpgCm: document.getElementById('lpgCm').value,
+        lpgRate: document.getElementById('lpgRate').value,
+        lpgTotal: document.getElementById('lpgTotal').value,
+        cngCm: document.getElementById('cngCm').value,
+        cngRate: document.getElementById('cngRate').value,
+        cngTotal: document.getElementById('cngTotal').value,
+        totalFuelQty: document.getElementById('totalFuelQty').value,
+        totalFuelPrice: document.getElementById('totalFuelPrice').value,
+        // Overtime
+        driverOt: document.getElementById('driverOt').value,
+        helperOt: document.getElementById('helperOt').value,
+        totalOt: document.getElementById('totalOt').value,
+        // Road Expense
+        roadToll: document.getElementById('roadToll').value,
+        roadFerry: document.getElementById('roadFerry').value,
+        roadBridge: document.getElementById('roadBridge').value,
+        roadParking: document.getElementById('roadParking').value,
+        roadHighway: document.getElementById('roadHighway').value,
+        roadLoading: document.getElementById('roadLoading').value,
+        roadPoliceTips: document.getElementById('roadPoliceTips').value,
+        roadOther: document.getElementById('roadOther').value,
+        totalRoadExpense: document.getElementById('totalRoadExpense').value,
+        // Meals
+        mealBreakfast: document.getElementById('mealBreakfast').value,
+        mealLunch: document.getElementById('mealLunch').value,
+        mealDinner: document.getElementById('mealDinner').value,
+        totalMeals: document.getElementById('totalMeals').value,
+        // Maintenance
+        maintEngineOil: document.getElementById('maintEngineOil').value,
+        maintTyre: document.getElementById('maintTyre').value,
+        maintBattery: document.getElementById('maintBattery').value,
+        maintBrake: document.getElementById('maintBrake').value,
+        maintServicing: document.getElementById('maintServicing').value,
+        maintRepair: document.getElementById('maintRepair').value,
+        maintSpareParts: document.getElementById('maintSpareParts').value,
+        maintLabour: document.getElementById('maintLabour').value,
+        totalMaintenance: document.getElementById('totalMaintenance').value,
+        // Police & Recovery
+        policeAmount: document.getElementById('policeAmount').value,
+        policeRemarks: document.getElementById('policeRemarks').value,
+        grandTotalTripCost: document.getElementById('grandTotalTripCost').value,
+        recoveryAmount: document.getElementById('recoveryAmount').value,
+        recoveryRemarks: document.getElementById('recoveryRemarks').value
+      };
+
+      document.getElementById('modalModeTag').textContent = currentEditRow 
+        ? `Updating SL #${currentEditSl} (Row ${currentEditRow})`
+        : "Creating New Trip Record";
+
+      let previewHtml = `
+        <div class="preview-section-title">📌 Trip & Vehicle Information</div>
+        <table class="preview-table">
+          <tr><td class="field-name">Vehicle Number</td><td class="field-val">${activePayload.vehicleNumber || '—'}</td></tr>
+          <tr><td class="field-name">Driver Name</td><td class="field-val">${activePayload.driverName || '—'}</td></tr>
+          <tr><td class="field-name">Route / Purpose</td><td class="field-val">${activePayload.route || '—'} (${activePayload.purpose || '—'})</td></tr>
+          <tr><td class="field-name">Trip Start</td><td class="field-val">${activePayload.tripStartDate || '—'} ${activePayload.tripStartTime || ''}</td></tr>
+          <tr><td class="field-name">Trip End</td><td class="field-val">${activePayload.tripEndDate || '—'} ${activePayload.tripEndTime || ''}</td></tr>
+          <tr><td class="field-name">Meter Range</td><td class="field-val">${activePayload.meterStartKm} KM ➔ ${activePayload.meterEndKm} KM</td></tr>
+          <tr class="highlight"><td class="field-name">Total Running Distance</td><td class="field-val">${activePayload.totalRunningKm} KM</td></tr>
+        </table>
+
+        <div class="preview-section-title">⛽ Fuel Consumption</div>
+        <table class="preview-table">
+          ${activePayload.dieselLtr > 0 ? `<tr><td class="field-name">Diesel</td><td class="field-val">${activePayload.dieselLtr} Ltr @ ${activePayload.dieselRate} = ৳${activePayload.dieselTotal}</td></tr>` : ''}
+          ${activePayload.octerLtr > 0 ? `<tr><td class="field-name">Octane</td><td class="field-val">${activePayload.octerLtr} Ltr @ ${activePayload.octerRate} = ৳${activePayload.octerTotal}</td></tr>` : ''}
+          ${activePayload.petrolLtr > 0 ? `<tr><td class="field-name">Petrol</td><td class="field-val">${activePayload.petrolLtr} Ltr @ ${activePayload.petrolRate} = ৳${activePayload.petrolTotal}</td></tr>` : ''}
+          ${activePayload.lpgCm > 0 ? `<tr><td class="field-name">LPG</td><td class="field-val">${activePayload.lpgCm} CM @ ${activePayload.lpgRate} = ৳${activePayload.lpgTotal}</td></tr>` : ''}
+          ${activePayload.cngCm > 0 ? `<tr><td class="field-name">CNG</td><td class="field-val">${activePayload.cngCm} CM @ ${activePayload.cngRate} = ৳${activePayload.cngTotal}</td></tr>` : ''}
+          <tr class="highlight"><td class="field-name">Total Fuel (Qty & Price)</td><td class="field-val">${activePayload.totalFuelQty} Units | ৳${Number(activePayload.totalFuelPrice).toLocaleString()}</td></tr>
+        </table>
+
+        <div class="preview-section-title">💵 Trip Cost Breakdown</div>
+        <table class="preview-table">
+          <tr><td class="field-name">Total Overtime</td><td class="field-val">৳${Number(activePayload.totalOt).toLocaleString()}</td></tr>
+          <tr><td class="field-name">Road Expenses (Toll/Bridge/Loading)</td><td class="field-val">৳${Number(activePayload.totalRoadExpense).toLocaleString()}</td></tr>
+          <tr><td class="field-name">Daily Meals Allowance</td><td class="field-val">৳${Number(activePayload.totalMeals).toLocaleString()}</td></tr>
+          <tr><td class="field-name">Vehicle Maintenance / Servicing</td><td class="field-val">৳${Number(activePayload.totalMaintenance).toLocaleString()}</td></tr>
+          <tr><td class="field-name">Police Case</td><td class="field-val">৳${Number(activePayload.policeAmount).toLocaleString()} ${activePayload.policeRemarks ? `(${activePayload.policeRemarks})` : ''}</td></tr>
+          <tr class="grand-total"><td class="field-name">GRAND TOTAL TRIP COST</td><td class="field-val">৳${Number(activePayload.grandTotalTripCost).toLocaleString()}</td></tr>
+          ${activePayload.recoveryAmount > 0 ? `<tr><td class="field-name">Accidental Recovery</td><td class="field-val">৳${Number(activePayload.recoveryAmount).toLocaleString()} ${activePayload.recoveryRemarks ? `(${activePayload.recoveryRemarks})` : ''}</td></tr>` : ''}
+        </table>
+      `;
+
+      document.getElementById('modalBody').innerHTML = previewHtml;
+      document.getElementById('previewModal').style.display = 'flex';
+    });
+
+    // Close Modal to Make Changes
+    document.getElementById('btnModalCancel').addEventListener('click', () => {
+      document.getElementById('previewModal').style.display = 'none';
+    });
+
+    // Confirm Submission
+    document.getElementById('btnModalConfirm').addEventListener('click', function() {
+      const confirmBtn = this;
+      const cancelBtn = document.getElementById('btnModalCancel');
+      const submitBtn = document.getElementById('btnSubmit');
+      const alertBox = document.getElementById('alertBox');
+
+      confirmBtn.disabled = true;
+      cancelBtn.disabled = true;
+      confirmBtn.textContent = "Saving to Google Sheets...";
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(activePayload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        document.getElementById('previewModal').style.display = 'none';
+        if (res.result === "success") {
+          alertBox.className = "alert-success";
+          alertBox.textContent = currentEditRow 
+            ? `Success: Trip SL #${res.slNo} (Row ${res.row}) updated successfully!`
+            : `Success: New Trip recorded with SL #${res.slNo}!`;
+          alertBox.style.display = "block";
+          resetForm();
+        } else {
+          throw new Error(res.message);
+        }
+      })
+      .catch(err => {
+        document.getElementById('previewModal').style.display = 'none';
+        alertBox.className = "alert-error";
+        alertBox.textContent = "Submission error: " + err.message;
+        alertBox.style.display = "block";
+      })
+      .finally(() => {
+        confirmBtn.disabled = false;
+        cancelBtn.disabled = false;
+        confirmBtn.textContent = "Confirm & Save Record";
+        submitBtn.disabled = false;
+        submitBtn.textContent = currentEditRow ? "Review & Update Trip Record" : "Review & Submit Trip Record";
+      });
+    });
+  </script>
+</body>
+</html>

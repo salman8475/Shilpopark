@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Sheet View - Depot Stock Transfer</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: "Segoe UI", Tahoma, Calibri, Arial, sans-serif; }
+    body { background-color: #e2e8f0; color: #000; padding: 15px; }
+
+    .toolbar-container {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 12px 20px;
+      border-radius: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .toolbar-title { font-weight: 700; font-size: 15px; color: #1e3a8a; margin-right: 15px; }
+    .filter-item { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #334155; }
+    .filter-item input, .filter-item select {
+      padding: 6px 10px;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .btn-action {
+      background: #107c41;
+      color: white;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-action:hover { background: #0c6233; }
+    .btn-action:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-export { background: #0284c7; }
+    .btn-export:hover { background: #0369a1; }
+
+    .sheet-wrapper {
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow: auto;
+      max-height: calc(100vh - 120px);
+    }
+
+    table.excel-table {
+      border-collapse: collapse;
+      font-size: 11.5px;
+      white-space: nowrap;
+      table-layout: auto;
+      background: #ffffff;
+    }
+
+    table.excel-table th, table.excel-table td {
+      border: 1px solid #d4d4d8;
+      padding: 4px 8px;
+      height: 24px;
+      vertical-align: middle;
+    }
+
+    .col-idx-header th {
+      background: #f4f4f5;
+      color: #71717a;
+      text-align: center;
+      font-weight: 600;
+      border: 1px solid #d4d4d8;
+      font-size: 11px;
+    }
+    .row-idx {
+      background: #f4f4f5;
+      color: #71717a;
+      text-align: center;
+      font-weight: 600;
+      width: 40px;
+      border-right: 2px solid #a1a1aa !important;
+    }
+
+    tr.subtotal-row td { background-color: #581c87; color: #ffffff; font-weight: 800; text-align: right; }
+    tr.percentage-row td { background-color: #fae8ff; color: #581c87; font-weight: 700; text-align: right; }
+
+    tr.table-header th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      color: #000;
+      font-weight: 800;
+      text-align: center;
+      border-bottom: 2px solid #475569;
+      z-index: 10;
+    }
+
+    .th-carton, .td-carton { background-color: #fee2e2 !important; }
+    .th-grand-total, .td-grand-total { background-color: #fed7aa !important; font-weight: bold; }
+    .th-st-value, .td-st-value { background-color: #fef08a !important; font-weight: bold; }
+    .th-vehicle-cost, .td-vehicle-cost { background-color: #fef08a !important; font-weight: bold; }
+    .th-tracking, .td-tracking { background-color: #bfdbfe !important; }
+    .td-depot { background-color: #ccfbf1 !important; }
+
+    .num { text-align: right; }
+    .center { text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar-container">
+    <div class="toolbar-title">📊 Depot Stock Transfer - Sheet View</div>
+    
+    <div class="filter-item">
+      <label>From Date:</label>
+      <input type="date" id="startDate" required>
+    </div>
+
+    <div class="filter-item">
+      <label>To Date:</label>
+      <input type="date" id="endDate" required>
+    </div>
+
+    <div class="filter-item">
+      <label>Depot:</label>
+      <select id="depotSelect">
+        <option value="all">All Depots</option>
+        <option value="ShilpoPark Depot">ShilpoPark Depot</option>
+        <option value="Barishal Depot">Barishal Depot</option>
+        <option value="Sreemangal Depot">Sreemangal Depot</option>
+        <option value="Jessore Depot">Jessore Depot</option>
+        <option value="Mymensingh Depot">Mymensingh Depot</option>
+        <option value="Chittagong Depot">Chittagong Depot</option>
+        <option value="Bogura depot">Bogura depot</option>
+        <option value="Comilla Depot">Comilla Depot</option>
+      </select>
+    </div>
+
+    <button type="button" id="btnFilter" class="btn-action">Load Date Range</button>
+    <button type="button" id="btnExport" class="btn-action btn-export" style="display:none;">Export (.xlsx)</button>
+  </div>
+
+  <div class="sheet-wrapper">
+    <table class="excel-table" id="excelTable">
+      <thead>
+        <tr class="col-idx-header" id="colLetterRow"></tr>
+
+        <tr class="table-header">
+          <th class="row-idx">#</th>
+          <th>SL #</th>
+          <th>Year</th>
+          <th>Month</th>
+          <th>Date</th>
+          <th>Depot Name</th>
+          <th class="th-carton">Total Ballpen</th>
+          <th class="th-carton">Total Writing</th>
+          <th class="th-carton">Food:</th>
+          <th class="th-carton">Memo:</th>
+          <th class="th-carton">Gifts & Others :</th>
+          <th class="th-grand-total">Grand Total CTN</th>
+          <th class="th-st-value">ST Value</th>
+          <th>Vehicle Rate</th>
+          <th>Additional Cost</th>
+          <th class="th-vehicle-cost">Per Vehicle Total Cost</th>
+          <th>Total LED Light Pcs</th>
+          <th>Total LED Light CTN</th>
+          <th>Drivers' Name</th>
+          <th>Drivers Mobile Number:</th>
+          <th>License No:</th>
+          <th>Vehicle Name</th>
+          <th>Vehicle No:</th>
+          <th>Transport Name:</th>
+          <th>Booking Receipt No:</th>
+          <th>Lock Number:</th>
+          <th>Gate Pass No:</th>
+          <th>Gate Pass Entry BY</th>
+          <th>Gate Pass Time:</th>
+          <th>Checked by:</th>
+          <th>Remarks:</th>
+          <th>Vehicle Qnty.</th>
+          <th class="th-tracking">Actual Received Date</th>
+          <th class="th-tracking">Actual Received by Tracking</th>
+          <th class="th-tracking">Note: if delay received truck</th>
+        </tr>
+
+        <!-- SUBTOTAL BAR -->
+        <tr class="subtotal-row" id="subtotalRow">
+          <td class="row-idx">∑</td>
+          <td colspan="5" style="text-align: center; letter-spacing: 1px;">SUBTOTAL &gt;</td>
+          <td class="num" id="sumBallpen">0</td>
+          <td class="num" id="sumWriting">0</td>
+          <td class="num" id="sumFood">0</td>
+          <td class="num" id="sumMemo">0</td>
+          <td class="num" id="sumOthers">0</td>
+          <td class="num" id="sumGrandTotal">0</td>
+          <td class="num" id="sumStValue">0</td>
+          <td class="num" id="sumVehicleRate">0</td>
+          <td class="num" id="sumAddCost">0</td>
+          <td class="num" id="sumPerVehicleCost">0</td>
+          <td colspan="19"></td>
+        </tr>
+
+        <!-- PERCENTAGE BAR -->
+        <tr class="percentage-row" id="percentRow">
+          <td class="row-idx">%</td>
+          <td colspan="5" style="text-align: center; font-size: 10px;">% BREAKDOWN</td>
+          <td class="num" id="pctBallpen">0.00%</td>
+          <td class="num" id="pctWriting">0.00%</td>
+          <td class="num" id="pctFood">0.00%</td>
+          <td class="num" id="pctMemo">0.00%</td>
+          <td class="num" id="pctOthers">0.00%</td>
+          <td class="num" style="font-weight: 800;">100.0%</td>
+          <td colspan="23"></td>
+        </tr>
+      </thead>
+      <tbody id="sheetBody">
+        <tr>
+          <td colspan="35" style="text-align: center; padding: 40px; color: #64748b;">
+            Select Date Range and click <strong>"Load Date Range"</strong>.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // =========================================================================
+    // PASTE YOUR DEPLOYED WEB APP URL HERE:
+    // =========================================================================
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx8Cnax4QVYWDIOxmSBlHmaOYWAJ3g5hLc_2up9N2xigox4ts_i5fJ_rSPa5yRnvBaK/exec";
+
+    let loadedRows = [];
+
+    // Pre-fill date inputs matching your screenshot dates (2025/2026)
+    document.getElementById('startDate').value = "2025-09-01";
+    document.getElementById('endDate').value = "2026-09-30";
+
+    // Build Column Letters
+    const colLetterRow = document.getElementById('colLetterRow');
+    colLetterRow.innerHTML = '<th></th>';
+    const cols = ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","AA","AB","AC","AD","AE","AF","AG","AH"];
+    cols.forEach(c => colLetterRow.innerHTML += `<th>${c}</th>`);
+
+    // FETCH BUTTON
+    document.getElementById('btnFilter').addEventListener('click', function() {
+      const sDate = document.getElementById('startDate').value;
+      const eDate = document.getElementById('endDate').value;
+      const depot = document.getElementById('depotSelect').value;
+      const btn = document.getElementById('btnFilter');
+      const tbody = document.getElementById('sheetBody');
+
+      if (!sDate || !eDate) {
+        alert("Please select dates");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      tbody.innerHTML = '<tr><td colspan="35" style="text-align:center; padding:30px;">Loading rows from Google Sheet...</td></tr>';
+
+      const url = `${SCRIPT_URL}?action=getExcelReport&startDate=${encodeURIComponent(sDate)}&endDate=${encodeURIComponent(eDate)}&depot=${encodeURIComponent(depot)}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          btn.disabled = false;
+          btn.textContent = "Load Date Range";
+
+          if (data.error) {
+            alert(data.error);
+            tbody.innerHTML = `<tr><td colspan="35" style="text-align:center; color:red;">${data.error}</td></tr>`;
+            return;
+          }
+
+          loadedRows = data.rows || [];
+          renderRows(loadedRows);
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.textContent = "Load Date Range";
+          tbody.innerHTML = `<tr><td colspan="35" style="text-align:center; color:red;">Fetch failed: ${err}. Check console or URL.</td></tr>`;
+        });
+    });
+
+    // RENDER SPREADSHEET
+    function renderRows(rows) {
+      const tbody = document.getElementById('sheetBody');
+      const exportBtn = document.getElementById('btnExport');
+
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="35" style="text-align:center; padding:30px; color:#64748b;">No rows found in this date range. Verify sheet dates.</td></tr>';
+        exportBtn.style.display = 'none';
+        resetSubtotals();
+        return;
+      }
+
+      let sBP = 0, sWrt = 0, sFood = 0, sMemo = 0, sOth = 0, sGrand = 0, sST = 0, sVRate = 0, sAdd = 0, sPVTotal = 0;
+      let html = "";
+
+      rows.forEach((r, idx) => {
+        sBP += Number(r[5]) || 0;
+        sWrt += Number(r[6]) || 0;
+        sFood += Number(r[7]) || 0;
+        sMemo += Number(r[8]) || 0;
+        sOth += Number(r[9]) || 0;
+        sGrand += Number(r[10]) || 0;
+        sST += Number(r[11]) || 0;
+        sVRate += Number(r[12]) || 0;
+        sAdd += Number(r[13]) || 0;
+        sPVTotal += Number(r[14]) || 0;
+
+        html += `
+          <tr>
+            <td class="row-idx">${idx + 1}</td>
+            <td class="center"><strong>${r[0]}</strong></td>
+            <td class="center">${r[1]}</td>
+            <td class="center">${r[2]}</td>
+            <td class="center">${r[3]}</td>
+            <td class="td-depot">${r[4]}</td>
+            <td class="num td-carton">${r[5]}</td>
+            <td class="num td-carton">${r[6]}</td>
+            <td class="num td-carton">${r[7]}</td>
+            <td class="num td-carton">${r[8]}</td>
+            <td class="num td-carton">${r[9]}</td>
+            <td class="num td-grand-total">${r[10]}</td>
+            <td class="num td-st-value">${r[11] ? r[11].toLocaleString() : ""}</td>
+            <td class="num">${r[12] ? r[12].toLocaleString() : ""}</td>
+            <td class="num">${r[13] || ""}</td>
+            <td class="num td-vehicle-cost">${r[14] ? r[14].toLocaleString() : ""}</td>
+            <td class="center">${r[15]}</td>
+            <td class="center">${r[16]}</td>
+            <td>${r[17]}</td>
+            <td>${r[18]}</td>
+            <td>${r[19]}</td>
+            <td>${r[20]}</td>
+            <td>${r[21]}</td>
+            <td>${r[22]}</td>
+            <td>${r[23]}</td>
+            <td>${r[24]}</td>
+            <td>${r[25]}</td>
+            <td>${r[26]}</td>
+            <td class="center">${r[27]}</td>
+            <td>${r[28]}</td>
+            <td>${r[29]}</td>
+            <td class="center">${r[30]}</td>
+            <td class="td-tracking center">${r[31]}</td>
+            <td class="td-tracking center">${r[32]}</td>
+            <td class="td-tracking">${r[33]}</td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+      exportBtn.style.display = "inline-flex";
+
+      // Populate Subtotal row
+      document.getElementById('sumBallpen').textContent = sBP.toLocaleString();
+      document.getElementById('sumWriting').textContent = sWrt.toLocaleString();
+      document.getElementById('sumFood').textContent = sFood.toLocaleString();
+      document.getElementById('sumMemo').textContent = sMemo.toLocaleString();
+      document.getElementById('sumOthers').textContent = sOth.toLocaleString();
+      document.getElementById('sumGrandTotal').textContent = sGrand.toLocaleString();
+      document.getElementById('sumStValue').textContent = sST.toLocaleString();
+      document.getElementById('sumVehicleRate').textContent = sVRate.toLocaleString();
+      document.getElementById('sumAddCost').textContent = sAdd.toLocaleString();
+      document.getElementById('sumPerVehicleCost').textContent = sPVTotal.toLocaleString();
+
+      // Populate Percentage row
+      if (sGrand > 0) {
+        document.getElementById('pctBallpen').textContent = ((sBP / sGrand) * 100).toFixed(2) + "%";
+        document.getElementById('pctWriting').textContent = ((sWrt / sGrand) * 100).toFixed(2) + "%";
+        document.getElementById('pctFood').textContent = ((sFood / sGrand) * 100).toFixed(2) + "%";
+        document.getElementById('pctMemo').textContent = ((sMemo / sGrand) * 100).toFixed(2) + "%";
+        document.getElementById('pctOthers').textContent = ((sOth / sGrand) * 100).toFixed(2) + "%";
+      }
+    }
+
+    function resetSubtotals() {
+      ['sumBallpen','sumWriting','sumFood','sumMemo','sumOthers','sumGrandTotal','sumStValue','sumVehicleRate','sumAddCost','sumPerVehicleCost'].forEach(id => {
+        document.getElementById(id).textContent = '0';
+      });
+      ['pctBallpen','pctWriting','pctFood','pctMemo','pctOthers'].forEach(id => {
+        document.getElementById(id).textContent = '0.00%';
+      });
+    }
+
+    // EXCEL EXPORT
+    document.getElementById('btnExport').addEventListener('click', function() {
+      if (!loadedRows.length) return;
+      const headers = ["SL #","Year","Month","Date","Depot Name","Total Ballpen","Total Writing","Food:","Memo:","Gifts & Others :","Grand Total CTN","ST Value","Vehicle Rate","Additional Cost","Per Vehicle Total Cost","Total LED Light Pcs","Total LED Light CTN","Drivers' Name","Drivers Mobile Number:","License No:","Vehicle Name","Vehicle No:","Transport Name:","Booking Receipt No:","Lock Number:","Gate Pass No:","Gate Pass Entry BY","Gate Pass Time:","Checked by:","Remarks:","Vehicle Qnty.","Actual Received Date","Actual Received by Tracking","Note: if delay received truck"];
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...loadedRows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet View Report");
+      XLSX.writeFile(wb, `Report_${document.getElementById('startDate').value}_to_${document.getElementById('endDate').value}.xlsx`);
+    });
+  </script>
+</body>
+</html>
